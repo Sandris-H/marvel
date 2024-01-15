@@ -7,15 +7,31 @@ import {
 } from "formik";
 import * as Yup from "yup";
 import { Link } from "react-router-dom";
+import ErrorMessage from "../errorMessage/ErrorMessage";
 
 import useMarvelService from "../../services/MarvelService";
-import ErrorMessage from "../errorMessage/ErrorMessage";
 
 import "./charSearchForm.scss";
 
+const setContent = (process, Component, Message, char) => {
+  switch (process) {
+    case "waiting":
+      return;
+    case "error":
+      return <ErrorMessage />;
+    case "loading":
+      return;
+    case "confirmed":
+      return char.length > 0 ? <Component /> : <Message />;
+    default:
+      throw new Error("Unexpected process state");
+  }
+};
+
 const CharSearchForm = () => {
   const [char, setChar] = useState(null);
-  const { loading, error, getCharacterByName, clearError } = useMarvelService();
+  const { getCharacterByName, clearError, process, setProcess } =
+    useMarvelService();
 
   const onCharLoaded = (char) => {
     setChar(char);
@@ -24,19 +40,17 @@ const CharSearchForm = () => {
   const updateChar = (name) => {
     clearError();
 
-    getCharacterByName(name).then(onCharLoaded);
+    getCharacterByName(name)
+      .then(onCharLoaded)
+      .then(() => setProcess("confirmed"));
   };
 
-  const errorMessage = error ? (
-    <div className="char__search-critical-error">
-      <ErrorMessage />
-    </div>
-  ) : null;
-  const results = !char ? null : char.length > 0 ? (
+  const FoundedChar = () => (
     <div className="char__search-wrapper">
       <div className="char__search-success">
         There is! Visit {char[0].name} page?
       </div>
+
       <Link
         to={`/characters/${char[0].id}`}
         className="button button__secondary"
@@ -44,12 +58,13 @@ const CharSearchForm = () => {
         <div className="inner">To page</div>
       </Link>
     </div>
-  ) : (
+  );
+
+  const NotFoundMessage = () => (
     <div className="char__search-error">
       The character was not found. Check the name and try again
     </div>
   );
-
   return (
     <div className="char__search-form">
       <Formik
@@ -77,7 +92,7 @@ const CharSearchForm = () => {
             <button
               type="submit"
               className="button button__main"
-              disabled={loading}
+              disabled={process === "loading"}
             >
               <div className="inner">find</div>
             </button>
@@ -89,8 +104,8 @@ const CharSearchForm = () => {
           />
         </Form>
       </Formik>
-      {results}
-      {errorMessage}
+
+      {setContent(process, FoundedChar, NotFoundMessage, char)}
     </div>
   );
 };

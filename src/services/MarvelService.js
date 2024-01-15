@@ -1,10 +1,10 @@
 import { useHttp } from "../hooks/http.hook";
 
 const useMarvelService = () => {
-  const { loading, request, error, clearError } = useHttp();
+  const { request, clearError, process, setProcess } = useHttp();
 
   const _apiBase = "https://gateway.marvel.com:443/v1/public/";
-  const _apiKey = "apikey=e2e2dc12ca67f3e96a3c7bcba4e56ea4";
+  const _apiKey = "apikey=xco78vi86djfg3icv678trxio234mk423k";
 
   const _charBaseOffset = 210;
   const _charLimit = 9;
@@ -24,9 +24,8 @@ const useMarvelService = () => {
     return _transformCharacter(res.data.results[0]);
   };
 
-    const getCharacterByName = async (name) => {
+  const getCharacterByName = async (name) => {
     const res = await request(`${_apiBase}characters?name=${name}&${_apiKey}`);
-    console.log(res);
     return res.data.results.map(_transformCharacter);
   };
 
@@ -38,12 +37,9 @@ const useMarvelService = () => {
   };
 
   const getComic = async (id) => {
-    console.log('id = ' + id)
     const res = await request(`${_apiBase}comics/${id}?${_apiKey}`);
     return _transformComics(res.data.results[0]);
   };
-
-
 
   const _transformCharacter = (char) => {
     return {
@@ -67,7 +63,6 @@ const useMarvelService = () => {
         : "No information about the number of pages",
       thumbnail: comics.thumbnail.path + "." + comics.thumbnail.extension,
       language: comics.textObjects[0]?.language || "en-us",
-      // optional chaining operator
       price: comics.prices[0].price
         ? `${comics.prices[0].price}$`
         : "not available",
@@ -75,12 +70,12 @@ const useMarvelService = () => {
   };
 
   return {
-    loading,
-    error,
+    clearError,
+    process,
+    setProcess,
     getAllCharacters,
     getCharacter,
     getCharacterByName,
-    clearError,
     getAllComics,
     getComic,
   };
